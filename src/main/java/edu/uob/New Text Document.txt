@@ -1,0 +1,11 @@
+get token type and value functions should not throw an error
+
+check for keywords while tokenizing which require space after them and for keywords which require space on either side of them
+OR
+alternative approach  is to tokenize space as well if the previous token is not space. make use of the spaces to validate query later during parsing
+
++ follwed by number should be stored as number without the plus when converting to a string
+
+saving of tables to file should take place when? this should happen when wwe update, add or remove something from the table
+
+handleCommand method should return OK by default + string from parse function in try. and show error message in catch in handleCommand
