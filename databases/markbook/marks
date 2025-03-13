@@ -1,6 +1,0 @@
-id	name	mark	pass
-INTEGER	STRING	INTEGER	BOOLEAN
-1	Simon	65	TRUE
-2	Sion	55	TRUE
-3	Rob	35	FALSE
-4	Chris	20	FALSE
