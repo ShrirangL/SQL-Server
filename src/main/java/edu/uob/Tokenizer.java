@@ -85,13 +85,13 @@ public class Tokenizer {
                 if(letterFound && !digitFound) {
                     // it could be keyword or identifier
                     if(keywords.contains(tokenVal.toString().toUpperCase())) {
-                        tokens.add(new Token(Token.TokenType.KEYWORD, tokenVal.toString()));
+                        tokens.add(new Token(Token.TokenType.KEYWORD, tokenVal.toString().toUpperCase()));
                     }
                     else if(booleanLiterals.contains(tokenVal.toString().toUpperCase())) {
-                        tokens.add(new Token(Token.TokenType.BOOLEAN_LITERAL, tokenVal.toString()));
+                        tokens.add(new Token(Token.TokenType.BOOLEAN_LITERAL, tokenVal.toString().toUpperCase()));
                     }
                     else if(tokenVal.toString().equalsIgnoreCase("LIKE")){
-                        tokens.add(new Token(Token.TokenType.COMPARATOR, tokenVal.toString()));
+                        tokens.add(new Token(Token.TokenType.COMPARATOR, tokenVal.toString().toUpperCase()));
                     }
                     else {
                         tokens.add(new Token(Token.TokenType.IDENTIFIER, tokenVal.toString()));

@@ -82,11 +82,21 @@ public class Table {
     }
 
     public Integer checkColumnName(String colName){
-        return columnNames.indexOf(colName);
+        for (int i = 0; i < columnNames.size(); i++) {
+            if(columnNames.get(i).equalsIgnoreCase(colName.toLowerCase())){
+                return i;
+            }
+        }
+        return -1;
     }
 
     public ColumnType checkColumnType(String colName){
-        return columnTypes.get(columnNames.indexOf(colName));
+        for (int i = 0; i < columnNames.size(); i++) {
+            if(columnNames.get(i).equalsIgnoreCase(colName.toLowerCase())){
+                return columnTypes.get(i);
+            }
+        }
+        return null;
     }
 
     public ArrayList<ArrayList<String>> getEntries(){
@@ -102,7 +112,7 @@ public class Table {
     }
 
     public void insertColumn(String columnName) throws IOException {
-        if(!columnNames.contains(columnName)) {
+        if(checkColumnName(columnName) < 0) {
             columnNames.add(columnName);
             for (ArrayList<String> entry : entries) {
                 entry.add("NULL");
@@ -115,7 +125,7 @@ public class Table {
     }
 
     public void removeColumn(String columnName) throws IOException {
-        int index = columnNames.indexOf(columnName);
+        int index = checkColumnName(columnName);
         if(index > 0 && index < columnNames.size()) {
             columnNames.remove(index);
             for (ArrayList<String> entry : entries) {
@@ -155,15 +165,15 @@ public class Table {
         //  if a single column is not valid throw error
         ArrayList<Integer>indexes = new ArrayList<Integer>();
         StringBuilder output = new StringBuilder();
-        if(columns.get(0).equals("ALL")) {
+        if(columns.get(0).equalsIgnoreCase("ALL")) {
             columns = columnNames;
         }
         for(String column : columns){
-            if(columnNames.contains(column)){
-                indexes.add(columnNames.indexOf(column));
+            if(checkColumnName(column) > -1){
+                indexes.add(checkColumnName(column));
             }
             else{
-                throw new IOException("Invalid column name");
+                throw new IOException("Invalid column name "+ column);
             }
         }
         // first get list of result of entries based on condition provided
@@ -232,7 +242,7 @@ public class Table {
 
     public void filterEntries(ArrayList<ArrayList<String>> list, InnerCondition condition) {
         // iterate through all the entries in the first parameter and remove entries that do not match
-        int index = columnNames.indexOf(condition.attribute);
+        int index = checkColumnName(condition.attribute);
         ColumnType type = columnTypes.get(index);
         if(index < 0 || index >= entries.get(0).size()) {
             throw new IndexOutOfBoundsException("Column name in condition does not exist");
@@ -330,7 +340,7 @@ public class Table {
         for(Triplet<String,String,Token.TokenType> value : values){
             // check if the column name exists and if the corresponding type is compatible
             int index = -1;
-            index = columnNames.indexOf(value.first);
+            index = checkColumnName(value.first);
             indexes.add(index);
             if(index == -1){
                 throw new IOException("Incorrect column name :" + value.first);
@@ -402,8 +412,12 @@ public class Table {
     public Boolean entryMatches(Integer index, InnerCondition condition) {
         // see it an entry matched inner condition
         ArrayList<String> entry = entries.get(index);
-        int columnIndex = columnNames.indexOf(condition.attribute);
+        int columnIndex = checkColumnName(condition.attribute);
         ColumnType type = columnTypes.get(columnIndex);
+
+        if(entry == null || columnIndex < 0 || type == null) {
+            throw new RuntimeException("Incorrect attribute in condition");
+        }
 
         switch(condition.comparator){
             case "==":

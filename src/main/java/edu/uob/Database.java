@@ -25,11 +25,12 @@ public class Database {
     }
 
     public void setUseDatabase(String dbName) throws IOException {
+        dbName = dbName.toLowerCase();
         // check if there is folder name database in the directory of folder
         String databasePath = Paths.get("databases"+ File.separator+dbName).toAbsolutePath().toString();
         File dbfolder = new File(databasePath);
         if(!dbfolder.exists()){
-            throw new IOException("Database: '" +databaseName+ "' does not exist");
+            throw new IOException("Database: '" +dbName+ "' does not exist");
         }
         this.databaseName = dbName;
 
@@ -46,10 +47,11 @@ public class Database {
         }
     }
     public void  createDatabase(String dbName) throws IOException {
+        dbName = dbName.toLowerCase();
         String databasePath = Paths.get("databases"+File.separator+dbName).toAbsolutePath().toString();
         File dbfolder = new File(databasePath);
         if(dbfolder.exists()) {
-            throw new IOException("Database: '" + databaseName + "' already exists");
+            throw new IOException("Database: '" + dbfolder.getName() + "' already exists");
         }
         Path path = Paths.get(databasePath);
         Files.createDirectory(path);
@@ -57,10 +59,16 @@ public class Database {
 
     public void createTable(String tableName, Optional<ArrayList<String>> columnNames) throws Exception {
         // go to database path and create file there with name provided in table name parameter
+        tableName = tableName.toLowerCase();
         String databasePath = Paths.get("databases"+ File.separator+databaseName).toAbsolutePath().toString();
         File dbfolder = new File(databasePath);
         if(!dbfolder.exists()){
-            throw new IOException("Database: '" +databaseName+ "' does not exist");
+            if(databaseName==null){
+                throw new IOException("Run USE command to create database first");
+            }
+            else{
+                throw new IOException("Database: '" +databaseName+ "' does not exist");
+            }
         }
         Path path = Paths.get(databasePath+File.separator+tableName);
         File file = new File(path.toString());
@@ -72,6 +80,7 @@ public class Database {
     }
 
     public void dropDatabase(String dbName) throws IOException {
+        dbName = dbName.toLowerCase();
         // first check if the database exists if not then throw exception
         String databasePath = Paths.get("databases"+ File.separator+dbName).toAbsolutePath().toString();
         File dbfolder = new File(databasePath);
@@ -91,17 +100,18 @@ public class Database {
                 currentFile.delete();
             }
         }
-        if(dbfolder.delete()){
-            System.out.println("Database: '" + databaseName + "' deleted successfully");
+        if(!dbfolder.delete()){
+            throw new IOException("Database: '" + databaseName + "' could not be deleted");
         }
     }
 
     public void addInTable(String tableName, String columnName) throws IOException {
         // find the table first in the list of table then let it add the column
+        tableName = tableName.toLowerCase();
         int index = -1;
 
         for(int i=0; i<tables.size(); i++){
-            if(tables.get(i).getName().equals(tableName)){
+            if(tables.get(i).getName().equalsIgnoreCase(tableName)){
                 index = i;
                 break;
             }
@@ -116,10 +126,11 @@ public class Database {
 
     public void dropInTable(String tableName,  String columnName) throws IOException {
         // find the table first in the list of table then let it delete the column
+        tableName = tableName.toLowerCase();
         int index = -1;
 
         for(int i=0; i<tables.size(); i++){
-            if(tables.get(i).getName().equals(tableName)){
+            if(tables.get(i).getName().equalsIgnoreCase(tableName)){
                 index = i;
                 break;
             }
@@ -134,6 +145,7 @@ public class Database {
 
     public void dropTable(String tableName) throws IOException {
         // find the table name in tables
+        tableName = tableName.toLowerCase();
         String tablePath = Paths.get("databases"+ File.separator+databaseName+File.separator+tableName).toAbsolutePath().toString();
         File table = new File(tablePath);
         if(!table.exists()){
@@ -143,7 +155,7 @@ public class Database {
         int index = -1;
         for(int i=0; i<tables.size(); i++){
             Table t = tables.get(i);
-            if(t.getName().equals(tableName)){
+            if(t.getName().equalsIgnoreCase(tableName)){
                 index = i;
                 t = null;
                 tables.remove(index);
@@ -154,9 +166,10 @@ public class Database {
 
     public void insertToTable(String tableName, ArrayList<String> values, ArrayList<Table.ColumnType>types) throws IOException {
         // check if the table exists in tables. If it does not, throw error
+        tableName = tableName.toLowerCase();
         int index = -1;
         for(int i = 0; i < tables.size(); i++){
-            if(tables.get(i).getName().equals(tableName)){
+            if(tables.get(i).getName().equalsIgnoreCase(tableName)){
                 index = i;
                 break;
             }
@@ -170,9 +183,10 @@ public class Database {
 
     public String queryTable(String tableName, ArrayList<String> attributeNames, Optional<OuterCondition> condition) throws IOException {
         // check if the table exists in tables. If it does not, throw error
+        tableName = tableName.toLowerCase();
         int index = -1;
         for(int i = 0; i < tables.size(); i++){
-            if(tables.get(i).getName().equals(tableName)){
+            if(tables.get(i).getName().equalsIgnoreCase(tableName)){
                 index = i;
                 break;
             }
@@ -187,9 +201,10 @@ public class Database {
 
     public void updateTable(String tableName, ArrayList<Triplet<String,String,Token.TokenType>>values, OuterCondition condition) throws IOException {
         // see if the table exists.
+        tableName = tableName.toLowerCase();
         int index = -1;
         for(int i = 0; i < tables.size(); i++){
-            if(tables.get(i).getName().equals(tableName)){
+            if(tables.get(i).getName().equalsIgnoreCase(tableName)){
                 index = i;
                 break;
             }
@@ -203,9 +218,10 @@ public class Database {
 
     public void deleteFromTable(String tableName, OuterCondition condition) throws IOException {
         // see if the table exists.
+        tableName = tableName.toLowerCase();
         int index = -1;
         for(int i = 0; i < tables.size(); i++){
-            if(tables.get(i).getName().equals(tableName)){
+            if(tables.get(i).getName().equalsIgnoreCase(tableName)){
                 index = i;
                 break;
             }
@@ -219,13 +235,15 @@ public class Database {
 
     public String joinTable(String firstTableName, String secondTableName, String firstAttributeName, String secondAttributeName) throws IOException {
         // does first and second table exist
+        firstTableName = firstTableName.toLowerCase();
+        secondTableName = secondTableName.toLowerCase();
         Table firstTableObj = null;
         Table secondTableObj = null;
         for(Table table : tables){
-            if(firstTableObj == null && table.getName().equals(firstTableName)){
+            if(firstTableObj == null && table.getName().equalsIgnoreCase(firstTableName)){
                 firstTableObj = table;
             }
-            if(secondTableObj == null && table.getName().equals(secondTableName)){
+            if(secondTableObj == null && table.getName().equalsIgnoreCase(secondTableName)){
                 secondTableObj = table;
             }
             if(firstTableObj != null && secondTableObj != null){
@@ -241,8 +259,8 @@ public class Database {
         }
 
         // does first  and second attribute exist in first table
-        int firstAttributeIndex = firstTableObj.checkColumnName(firstAttributeName);
-        int secondAttributeIndex = secondTableObj.checkColumnName(secondAttributeName);
+        int firstAttributeIndex = firstTableObj.checkColumnName(firstAttributeName.toLowerCase());
+        int secondAttributeIndex = secondTableObj.checkColumnName(secondAttributeName.toLowerCase());
 
         if(firstAttributeIndex < 0){
             throw new IOException("Column :'"+ firstAttributeName+ "'does not exist in table :'" +firstTableName);
@@ -255,7 +273,7 @@ public class Database {
         Table.ColumnType firstColumntype = firstTableObj.checkColumnType(firstAttributeName);
         Table.ColumnType secondColumntype = secondTableObj.checkColumnType(secondAttributeName);
 
-        if(firstColumntype != secondColumntype){
+        if(firstColumntype != null && secondColumntype != null && firstColumntype != secondColumntype){
             throw new IOException("Attribute type mismatch");
         }
 
