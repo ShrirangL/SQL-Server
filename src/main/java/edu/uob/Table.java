@@ -128,6 +128,7 @@ public class Table {
         int index = checkColumnName(columnName);
         if(index > 0 && index < columnNames.size()) {
             columnNames.remove(index);
+            columnTypes.remove(index);
             for (ArrayList<String> entry : entries) {
                 entry.remove(index);
             }

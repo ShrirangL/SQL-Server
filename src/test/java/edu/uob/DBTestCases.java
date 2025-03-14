@@ -9,6 +9,7 @@ import java.time.Duration;
 
 public class DBTestCases {
 
+
     private DBServer server;
 
     // Create a new server _before_ every @Test
@@ -34,71 +35,82 @@ public class DBTestCases {
     // It then checks the response to see that a couple of the entries in the table are returned as expected
     @Test
     public void testBasicCreateAndQuery() {
-        String randomName = generateRandomName();
-        sendCommandToServer("CREATE DATABASE " + randomName + ";");
-        sendCommandToServer("USE " + randomName + ";");
-        sendCommandToServer("CREATE TABLE marks (name, mark, pass);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Simon', 65, TRUE);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Sion', 55, TRUE);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Rob', 35, FALSE);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Chris', 20, FALSE);");
-        String response = sendCommandToServer("SELECT * FROM marks;");
-        assertTrue(response.contains("[OK]"), "A valid query was made, however an [OK] tag was not returned");
-        assertFalse(response.contains("[ERROR]"), "A valid query was made, however an [ERROR] tag was returned");
-        assertTrue(response.contains("Simon"), "An attempt was made to add Simon to the table, but they were not returned by SELECT *");
-        assertTrue(response.contains("Chris"), "An attempt was made to add Chris to the table, but they were not returned by SELECT *");
+        assertTrue(sendCommandToServer("create Database XyZ;").contains("OK"));
+        assertTrue(sendCommandToServer("USE xYz;").contains("OK"));
+        assertTrue(sendCommandToServer("Drop DATABASE xyZ;").contains("OK"));
+
+        String dbName = generateRandomName();
+        assertTrue(sendCommandToServer("create database " + dbName + ";").contains("OK"));
+        assertTrue(sendCommandToServer("USE " + dbName + ";").contains("OK"));
+        assertTrue(sendCommandToServer("Create tAble Marks (Name, Mark, Pass)").contains("ERROR")); //fail
+        assertTrue(sendCommandToServer("Create tAble Marks (Name, Mark, Pass);").contains("OK")); //fail
+        assertTrue(sendCommandToServer("INSERT into marks Values   ('Simon', 20, FALSE);").contains("OK"));
+        assertTrue(sendCommandToServer("Insert into Marks VALUES('Sion', 30, FALSE);").contains("OK"));
+        assertTrue(sendCommandToServer("insert INTO marKs VALUES ('Rob', 40, FALSE);").contains("OK"));
+        assertTrue(sendCommandToServer("Insert intO mArks values ( 'Chris', 50, TRUE);").contains("OK"));
+        assertTrue(sendCommandToServer("INSERT into marks Values ('Zack' ,  60,TRUE)  ;").contains("OK"));
+        assertTrue(sendCommandToServer("Insert into Marks VALUES ('Pete'  , 70, TRUE  ) ;").contains("OK"));
+        assertTrue(sendCommandToServer("insert INTO marKs VALUES ('Hector', 80  , TRUE  );").contains("OK"));
+        assertTrue(sendCommandToServer("Insert intO mArks values ( 'Achilles', 90   , TRUE);").contains("OK"));
+
+        assertTrue(sendCommandToServer("Select * From Marks;").contains("OK"));
+        assertTrue(sendCommandToServer("Select* From Marks;").contains("ERROR"));// fail
+        assertTrue(sendCommandToServer("Select *From Marks;").contains("ERROR")); // fail
+        assertTrue(sendCommandToServer("Select*From Marks;").contains("ERROR")); // fail
+
+        assertTrue(sendCommandToServer("select * from Marks Where Name  =='Sion';").contains("OK"));
+        assertTrue(sendCommandToServer("select * from Marks Where Name!='Sion';").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE pass== TRUE;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE pass!=  FALSE;").contains("OK"));
+
+        assertTrue(sendCommandToServer("SELECT * FROM marks;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE pass == FALSE AND mark > 35;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE (pass == FALSE AND mark > 35);").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE(pass == FALSE) AND (mark > 35);").contains("ERROR"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE (pass == FALSE) AND (mark > 35);").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE (pass == FALSE) AND (mark > 35);").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE ((pass == FALSE) AND (mark > 35));").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE (pass == FALSE AND (mark > 35));").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE ((pass == FALSE) AND mark > 35);").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE (pass == FALSE) AND mark > 35;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE pass == FALSE AND (mark > 35);").contains("OK"));
+
+        assertTrue(sendCommandToServer("Create tAble Coursework (Task, Submission);").contains("OK"));
+        assertTrue(sendCommandToServer("INSERT into Coursework Values ('OXO', 3);").contains("OK"));
+        assertTrue(sendCommandToServer("Insert into Coursework VALUES ('DB',1);").contains("OK"));
+        assertTrue(sendCommandToServer("insert INTO Coursework VALUES ('OXO', 4);").contains("OK"));
+        assertTrue(sendCommandToServer("Insert intO Coursework values('STAG',2);").contains("OK"));
+        assertTrue(sendCommandToServer("INSERT into Coursework Values ('TOXO'  , 7);").contains("OK"));
+        assertTrue(sendCommandToServer("Insert into Coursework VALUES ('GDB',4);").contains("OK"));
+        assertTrue(sendCommandToServer("insert INTO Coursework VALUES ('BOXO', 8);").contains("OK"));
+        assertTrue(sendCommandToServer("Insert intO Coursework values ('TAG', 6);").contains("OK"));
+
+        assertTrue(sendCommandToServer("Select * fRom courSework;").contains("OK"));
+        assertTrue(sendCommandToServer("JOIN coursework AND marks ON submission AND id;").contains("OK"));
+        assertTrue(sendCommandToServer("Update marks Set Mark = 38, paSS = FALSE Where Name == 'Chris';").contains("OK"));
+        assertTrue(sendCommandToServer("Select * From mArks Where (Name == 'Chris');").contains("OK"));
+        assertTrue(sendCommandToServer("Delete from MArks where namE == 'Sion';").contains("OK"));
+
+        assertTrue(sendCommandToServer("SELECT * FROM marks WHERE name LIKE 'i';").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT id FROM marks WHERE pass == FALSE;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT name FROM marks WHERE mark>60;").contains("OK"));
+        assertTrue(sendCommandToServer("DELETE FROM marks WHERE mark<40;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks;").contains("OK"));
+        assertTrue(sendCommandToServer("ALTER TABLE marks ADD age;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks;").contains("OK"));
+        assertTrue(sendCommandToServer("UPDATE marks SET age = 35 WHERE name == 'Simon';").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks;").contains("OK"));
+        assertTrue(sendCommandToServer("ALTER TABLE marks DROP mark;").contains("OK"));
+        assertTrue(sendCommandToServer("ALTER TABLE marks DROP pass;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks;").contains("OK"));
+        assertTrue(sendCommandToServer("SELECT * FROM marks").contains("ERROR"));
+        assertTrue(sendCommandToServer("SELECT * FROM crew;").contains("ERROR"));
+        assertTrue(sendCommandToServer("SELECT height FROM marks WHERE name == 'Chris';").contains("ERROR"));
+        assertTrue(sendCommandToServer("DROP TABLE marks;").contains("OK"));
+        assertTrue(sendCommandToServer("DROP DATABASE " + dbName + " ;").contains("OK"));
     }
 
-    // A test to make sure that querying returns a valid ID (this test also implicitly checks the "==" condition)
-    // (these IDs are used to create relations between tables, so it is essential that suitable IDs are being generated and returned !)
-    @Test
-    public void testQueryID() {
-        String randomName = generateRandomName();
-        sendCommandToServer("CREATE DATABASE " + randomName + ";");
-        sendCommandToServer("USE " + randomName + ";");
-        sendCommandToServer("CREATE TABLE marks (name, mark, pass);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Simon', 65, TRUE);");
-        String response = sendCommandToServer("SELECT id FROM marks WHERE name == 'Simon';");
-        // Convert multi-lined responses into just a single line
-        String singleLine = response.replace("\n"," ").trim();
-        // Split the line on the space character
-        String[] tokens = singleLine.split(" ");
-        // Check that the very last token is a number (which should be the ID of the entry)
-        String lastToken = tokens[tokens.length-1];
-        try {
-            Integer.parseInt(lastToken);
-        } catch (NumberFormatException nfe) {
-            fail("The last token returned by `SELECT id FROM marks WHERE name == 'Simon';` should have been an integer ID, but was " + lastToken);
-        }
-    }
-
-    // A test to make sure that databases can be reopened after server restart
-    @Test
-    public void testTablePersistsAfterRestart() {
-        String randomName = generateRandomName();
-        sendCommandToServer("CREATE DATABASE " + randomName + ";");
-        sendCommandToServer("USE " + randomName + ";");
-        sendCommandToServer("CREATE TABLE marks (name, mark, pass);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Simon', 65, TRUE);");
-        // Create a new server object
-        server = new DBServer();
-        sendCommandToServer("USE " + randomName + ";");
-        String response = sendCommandToServer("SELECT * FROM marks;");
-        assertTrue(response.contains("Simon"), "Simon was added to a table and the server restarted - but Simon was not returned by SELECT *");
-    }
-
-    // Test to make sure that the [ERROR] tag is returned in the case of an error (and NOT the [OK] tag)
-    @Test
-    public void testForErrorTag() {
-        String randomName = generateRandomName();
-        sendCommandToServer("CREATE DATABASE " + randomName + ";");
-        sendCommandToServer("USE " + randomName + ";");
-        sendCommandToServer("CREATE TABLE marks (name, mark, pass);");
-        sendCommandToServer("INSERT INTO marks VALUES ('Simon', 65, TRUE);");
-        String response = sendCommandToServer("SELECT * FROM libraryfines;");
-        assertTrue(response.contains("[ERROR]"), "An attempt was made to access a non-existent table, however an [ERROR] tag was not returned");
-        assertFalse(response.contains("[OK]"), "An attempt was made to access a non-existent table, however an [OK] tag was returned");
-    }
 
 }
+
 

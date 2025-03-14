@@ -85,6 +85,20 @@ public class Tokenizer {
                 if(letterFound && !digitFound) {
                     // it could be keyword or identifier
                     if(keywords.contains(tokenVal.toString().toUpperCase())) {
+
+                        if(trailingSpaceKeyWords.contains(tokenVal.toString().toUpperCase())
+                        && command.charAt(idx) != ' ') {
+                            // current character must be a space
+                            throw new RuntimeException("Keyword: '" + tokenVal.toString().toUpperCase() + "' must have space after it");
+                        }
+                        else if(leadingSpaceKeywords.contains(tokenVal.toString().toUpperCase()) && start > 0 && command.charAt(start-1) != ' ') {
+                            throw new RuntimeException("Keyword: '" + tokenVal.toString().toUpperCase() + "' must have space before it");
+                        }
+                        else if(spacePaddedKeywords.contains(tokenVal.toString().toUpperCase())
+                        && (command.charAt(idx) != ' ' || (start > 0 && command.charAt(start-1) != ' '))) {
+                            throw new RuntimeException("Keyword: '" + tokenVal.toString().toUpperCase() + "' must have space before and after it");
+                        }
+
                         tokens.add(new Token(Token.TokenType.KEYWORD, tokenVal.toString().toUpperCase()));
                     }
                     else if(booleanLiterals.contains(tokenVal.toString().toUpperCase())) {
@@ -150,6 +164,18 @@ public class Tokenizer {
     private static final ArrayList<String> keywords = new ArrayList<String>(Arrays.asList(
             "USE", "CREATE", "DROP", "ALTER", "INSERT", "SELECT", "UPDATE", "DELETE", "JOIN", "DATABASE",
             "TABLE", "ADD", "INTO", "VALUES", "FROM", "WHERE", "SET", "AND", "ON", "OR"
+    ));
+
+    private static final ArrayList<String> trailingSpaceKeyWords = new ArrayList<>(Arrays.asList(
+            "USE", "CREATE", "DATABASE", "TABLE", "DROP", "ALTER", "INSERT", "INTO", "SELECT", "UPDATE", "DELETE", "JOIN"
+    ));
+
+    private static final ArrayList<String> leadingSpaceKeywords = new ArrayList<>(Arrays.asList(
+            "VALUES"
+    ));
+
+    private static final ArrayList<String> spacePaddedKeywords = new ArrayList<>(Arrays.asList(
+            "FROM", "WHERE", "SET", "AND", "OR", "ON", "ADD"
     ));
 
     private static final ArrayList<String> comparators = new ArrayList<String>(Arrays.asList(

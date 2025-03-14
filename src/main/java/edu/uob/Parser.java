@@ -3,6 +3,7 @@ package edu.uob;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Stack;
 
 public class Parser {
     private ArrayList<Token> tokens;
@@ -439,36 +440,79 @@ public class Parser {
             moveToNextToken();
         }
 
-        if(tokenList.get(0).getTokenValue().equals(")") || tokenList.get(tokenList.size()-1).getTokenValue().equals("(")){
-            throw new RuntimeException("Malformed parenthesis in condition");
+        ArrayList<Integer>indexToRemove = new ArrayList<>();
+        //Alternatively take stacks from the beginning from the end around AND
+        ArrayList<String> st = new ArrayList<>();
+        for(int i = 0; i < tokenList.size() && tokenList.get(i).getTokenType() == Token.TokenType.PARENTHESIS; i++){
+            st.add(tokenList.get(i).getTokenValue());
+            indexToRemove.add(i);
         }
-        //If the first token is opening parenthesis brace then last must be closing parenthesis else throw error
-        if(tokenList.get(0).getTokenValue().equals("(") && tokenList.get(1).getTokenValue().equals("(")){
-            if(tokenList.get(tokenList.size()-1).getTokenValue().equals(")") && tokenList.get(tokenList.size()-2).getTokenValue().equals(")")){
-                tokenList.remove(tokenList.size()-1);
-                tokenList.remove(0);
+        for(int i = 0; i < tokenList.size(); i++){
+            String tokenVal = tokenList.get(i).getTokenValue();
+            if(tokenVal.equalsIgnoreCase("AND") || tokenVal.equalsIgnoreCase("OR")){
+                // move backwards while adding braces
+                for(int j = i-1; j >= 0 && tokenList.get(j).getTokenType() == Token.TokenType.PARENTHESIS; j--){
+                    st.add(tokenList.get(j).getTokenValue());
+                    indexToRemove.add(j);
+                }
+                //move forward while adding braces
+                for(int j = i+1; j < tokenList.size() && tokenList.get(j).getTokenType() == Token.TokenType.PARENTHESIS; j++){
+                    st.add(tokenList.get(j).getTokenValue());
+                    indexToRemove.add(j);
+                }
             }
-            else{
-                throw new RuntimeException("Malformed condition: matching brace not found");
+        }
+        for(int i = tokenList.size()-1; i >= 0 && tokenList.get(i).getTokenType() == Token.TokenType.PARENTHESIS; i--){
+            st.add(tokenList.get(i).getTokenValue());
+            indexToRemove.add(i);
+        }
+
+        boolean mismatch = false;
+        Stack<String>stack = new Stack<>();
+        for(int i = 0; i <st.size(); i++){
+            if(st.get(i).equals("(")){
+                stack.push(st.get(i));
+            }
+            else if(st.get(i).equals(")")){
+                if(stack.isEmpty()){
+                    mismatch = true;
+                    break;
+                }
+                stack.pop();
             }
         }
 
+        if(!stack.isEmpty() || mismatch){
+            throw new RuntimeException("Incorrectly formed condition, parenthesis mismatch");
+        }
+
+        // create a copy list skipping indexes of original list
+        ArrayList<Token> newTokenList = new ArrayList<>();
+        for(int i = 0; i < tokenList.size(); i++){
+            if(!indexToRemove.contains(i)){
+                newTokenList.add(tokenList.get(i));
+            }
+        }
+
+        tokenList.clear();
+
         int boolOperatorIndex = -1;
-        for(int i=0; i<tokenList.size(); i++){
-            if(tokenList.get(i).getTokenValue().equals("AND") || tokenList.get(i).getTokenValue().equals("OR")){
+        for(int i=0; i<newTokenList.size(); i++){
+            String tokenVal = newTokenList.get(i).getTokenValue();
+            if(tokenVal.equals("AND") || tokenVal.equals("OR")){
                 boolOperatorIndex = i;
-                boolOperator = tokenList.get(i).getTokenValue();
+                boolOperator = tokenVal;
                 break;
             }
         }
 
         if(boolOperatorIndex < 0){
-            condition1 = parseCondition(tokenList);
+            condition1 = parseCondition(newTokenList);
             return new OuterCondition(condition1,null,null);
         }
         else {
-            condition1 = parseCondition(new ArrayList<>(tokenList.subList(0, boolOperatorIndex)));
-            condition2 = parseCondition(new ArrayList<>(tokenList.subList(boolOperatorIndex+1, tokenList.size())));
+            condition1 = parseCondition(new ArrayList<>(newTokenList.subList(0, boolOperatorIndex)));
+            condition2 = parseCondition(new ArrayList<>(newTokenList.subList(boolOperatorIndex+1, newTokenList.size())));
             return new OuterCondition(condition1, boolOperator, condition2);
         }
     }
