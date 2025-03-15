@@ -78,6 +78,7 @@ public class Tokenizer {
                 // we might have a float literal
                 if(idx < command.length() && command.charAt(idx) == '.' && !letterFound && digitFound) {
                     do {
+                        tokenVal.append(command.charAt(idx));
                         idx++;
                     } while (Character.isDigit(command.charAt(idx)));
                 }
@@ -128,16 +129,23 @@ public class Tokenizer {
             // Check + or -
             else if(command.charAt(idx) == '+' || command.charAt(idx) == '-') {
                 boolean decimalFound = false;
-                do {
+                boolean negative = command.charAt(idx) == '-';
+                if(negative){
+                    tokenVal.append(command.charAt(idx));
+                }
+                idx++;
+                while (idx < command.length() && Character.isDigit(command.charAt(idx))){
                     tokenVal.append(command.charAt(idx));
                     idx++;
-                } while (idx < command.length() && Character.isDigit(command.charAt(idx)));
+                }
                 if(command.charAt(idx) == '.') {
                     decimalFound = true;
-                    do {
+                    tokenVal.append(command.charAt(idx));
+                    idx++;
+                    while (idx < command.length() && Character.isDigit(command.charAt(idx))){
                         tokenVal.append(command.charAt(idx));
                         idx++;
-                    }while (idx < command.length() && Character.isDigit(command.charAt(idx)));
+                    }
                 }
 
                 if(decimalFound) {
@@ -183,7 +191,7 @@ public class Tokenizer {
     ));
 
     private static final ArrayList<String> symbols = new ArrayList<String>(Arrays.asList(
-            "!", "#" , "$" , "%" , "&" , "(" , ")" , "*" , "+" , "," , "-" , "." , "/" , ":" , ";" ,
+            "!", "#" , "$" , "%" , "&" , "(" , ")" , "*" , "," , "." , "/" , ":" , ";" ,
             ">" , "=" , "<" , "?" , "@" , "[" , "\\" , "]" , "^" , "_" , "`" , "{" , "}" , "~"
     ));
 
