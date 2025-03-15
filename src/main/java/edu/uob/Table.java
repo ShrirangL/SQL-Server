@@ -135,30 +135,29 @@ public class Table {
             writeToFile();
         }
         else {
-            throw new IOException("Column " + columnName + "does not exist or cannot be removed");
+            throw new IOException("Column " + columnName + " does not exist or cannot be removed");
         }
     }
 
     public void insertEntry(ArrayList<String> entry, ArrayList<ColumnType> types) throws IOException {
         // If table is newly created then we the first insert entry must set the column types
+        types.add(0, ColumnType.INTEGER); // adding type for first column 'id'
         if(entries.isEmpty()) {
-            types.add(0, ColumnType.INTEGER); // first column is id of type int
             columnTypes.addAll(types); // get types directly from first entry
             entry.add(0, String.valueOf(1)); // the first id is always 1
-            entries.add(entry);
         }
         else {
-            // else check if the incoming types match the existing types except the first column
-            ArrayList<ColumnType> entryTypes = new ArrayList<ColumnType>(columnTypes);
-            entryTypes.remove(0);
-            if (!entryTypes.equals(types)) {
-                throw new IOException("Column type mismatch");
-            } else {
-                int lastIndex = Integer.parseInt(entries.get(entries.size() - 1).get(0));
-                entry.add(0, String.valueOf(lastIndex+1));
-                entries.add(entry);
-            }
+            int lastIndex = Integer.parseInt(entries.get(entries.size() - 1).get(0));
+            entry.add(0, String.valueOf(lastIndex+1));
         }
+        // Check if the types of entries match with the column types
+        if(entry.size() !=  columnNames.size()) {
+            throw new IOException("values provided are more or less than the available columns");
+        }
+        else if(!columnTypes.equals(types)){
+            throw new IOException("Types of the values provided does not match types of available columns");
+        }
+        entries.add(entry);
         writeToFile();
     }
 
@@ -342,11 +341,13 @@ public class Table {
             // check if the column name exists and if the corresponding type is compatible
             int index = -1;
             index = checkColumnName(value.first);
-            indexes.add(index);
             if(index == -1){
                 throw new IOException("Incorrect column name :" + value.first);
             }
-            if(index < columnTypes.size() && !isCompatibleType(value.third, columnTypes.get(index))){
+            else if(index == 0){
+                throw new IOException("Column id is primary key and cannot be deleted");
+            }
+            else if(index < columnTypes.size() && !isCompatibleType(value.third, columnTypes.get(index))){
                 throw new IOException("Incompatible column type at index: " + index);
             }
             else if(index < columnNames.size() && index >= columnTypes.size()){
@@ -366,6 +367,7 @@ public class Table {
                         break;
                 }
             }
+            indexes.add(index);
         }
 
         // Iterate through all the entries and if they match the condition update them
